@@ -1,39 +1,31 @@
 import os
 import pickle
 import pandas as pd
+from cleantext import clean
 
-from data import Data
+import nltk
+from nltk.corpus import stopwords
+nltk.download("stopwords")
+
+from nltk.stem import WordNetLemmatizer
 
 class Predict:
-    def __init__(self, 
-                 in_filename,
-                 clean_filename = 'model_predict.csv',
-                 out_filename = 'predictions.csv',
-                 model_filename = 'model/model.pkl'):
-        self.predict(in_filename,
-                     clean_filename = 'model_predict.csv',
-                     out_filename = 'predictions.csv',
-                     model_filename = 'model/model.pkl')
-        os.remove('model_predict.csv')
+    def __init__(self, model_path = '../model/model.pkl'):
+        self.model = pickle.load(open(model_path, 'rb'))
         
-    def get_data(self, 
-                 in_filename,
-                 clean_filename = 'model_predict.csv'):
-        Data(in_filename, clean_filename, train = False)
-        df = pd.read_csv(clean_filename).dropna()
-        original, X = df['title'], df['name']
-        return original, X
+    def clean_data(self, name, title):
+        data = name + ' ' + title
+        data = data.replace('[^A-Za-z0-9 ]+', ' ')
+        data = clean(data, clean_all = False, 
+                           extra_spaces = True, 
+                           stemming = False,
+                           stopwords = True, 
+                           lowercase = True, 
+                           numbers = True, 
+                           punct = True
+                    )
+        data = ' '.join([lemmatizer.lemmatize(word) for word in data.split()])
+        return data
     
-    def predict(self, 
-                in_filename,
-                clean_filename = 'model_predict.csv',
-                out_filename = 'predictions.csv',
-                model_filename = 'model/model.pkl'):
-        original, X = self.get_data(in_filename, clean_filename)
-        model = pickle.load(open(model_filename, 'rb'))
-        y_predict = model.predict(X)
-
-        df = pd.DataFrame({'title': original, 'class': y_predict})
-        df['class'] = df['class'].map({0: 'Entertainment', 1: 'News', 2: 'Sports'})
-        df.to_csv(out_filename, index = False)
-        print('Predictions saved at {}'.format(out_filename))
+    def predict(self, inp):
+        return category_dict[self.model.predict([inp])[0]]
