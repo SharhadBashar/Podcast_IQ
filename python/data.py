@@ -1,4 +1,5 @@
 import os
+import pickle
 import pandas as pd
 from cleantext import clean
 
@@ -19,25 +20,18 @@ class Data:
         train = True, 
         to_drop = ['Unnamed: 0', 'ContentUrl', 'Country', 'Language']):
 
-        in_filename = in_filename if in_filename else 'Podcasts.csv'
-        en_filename = en_filename if en_filename else 'Podcasts_en.csv'
-        clean_filename = clean_filename if clean_filename else 'podcasts_en_cleaned.csv'
-        data_path = data_path if data_path else '../data/'
+        self.in_filename = in_filename if in_filename else 'Podcasts.csv'
+        self.en_filename = en_filename if en_filename else 'Podcasts_en.csv'
+        self.clean_filename = clean_filename if clean_filename else 'podcasts_en_cleaned.csv'
+        self.data_path = data_path if data_path else '../data/'
 
-        self.get_en(os.path.join(data_path, in_filename), 
+        self.get_en(os.path.join(self.data_path, self.in_filename), 
             save_file = True, 
-            save_path = os.path.join(data_path, en_filename))
+            save_path = os.path.join(self.data_path, self.en_filename))
 
-        df = read_csv(os.path.join(data_path, en_filename), 
-              to_drop = to_drop)
+        df = self.read_csv(os.path.join(self.data_path, self.en_filename), to_drop = to_drop)
 
-        headers = ['name', 'class'] if train else ['name']
-        if (in_filename.split('.')[-1] == 'xlsx'):
-            df = pd.DataFrame(pd.read_excel(in_filename, names = headers))
-        else:
-            df = pd.read_csv(in_filename, names = headers)
-        df = self.clean_data(df, translate = False, stem = False, lemm = True, train = train)
-        self.save_df(df, filename = clean_filename)
+        
 
     def read_csv(self, filename, to_drop = []):
         df = pd.read_csv(filename)
@@ -57,31 +51,29 @@ class Data:
         df = df[~df['stylename'].isin(cat_to_drop)]
         return df
 
-    def augment_cols(df):
+    def augment_cols(df, map_filename = 'cat_mapping_en.pkl'):
         df['name_title'] = df['podcastname'].astype(str) + ' ' + df['Title'].astype(str)
-        df['target'] = pd.factorize(df['stylename'])[0]
+        df['target'], map = pd.factorize(df['stylename'])
+        map = dict(zip(range(len(map)), map))
+        with open(os.path.join(self.data_path, map_filename), 'wb') as file:
+            pickle.dump(map, file, protocol = pickle.HIGHEST_PROTOCOL)
         return df 
 
-    def clean_data(self, df, translate = False, stem = False, lemm = True, train = True):
-        #translator = Translator()
-        stop = stopwords.words('english')
-        stemmer = PorterStemmer()
+    def clean_data(df, translate = False):
         lemmatizer = WordNetLemmatizer()
-        df['title'] = df['name']
-        df['name'] = df['name'].str.replace('[^A-Za-z0-9 ]+', ' ')
-        if translate: 
-            df['name'] = df['name'].apply(lambda x: translator.translate(x, dest = 'en'))
-        df['name'] = df['name'].apply(lambda x: clean(x))
-        df['name'] = df['name'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
-        if stem:
-            df['name'] = df['name'].apply(lambda x: ' '.join([stemmer.stem(word) for word in x.split()]))
-        if lemm:
-            df['name'] = df['name'].apply(lambda x: ' '.join([lemmatizer.lemmatize(word) for word in x.split()]))
-
-        if train:
-            df['class'] = df['class'].map({'Entertainment': 0, 'News': 1, 'Sports': 2})
+        # df['name_title'] = df['name_title'].apply(lambda x: re.sub(date, ' ', x))
+        df['name_title'] = df['name_title'].str.replace('[^A-Za-z0-9 ]+', ' ')
+        df['name_title'] = df['name_title'].apply(lambda x: clean(x, clean_all = False, 
+                                                                extra_spaces = True,                                                   
+                                                                stemming = False,
+                                                                stopwords = True,
+                                                                lowercase = True,
+                                                                numbers = True,
+                                                                punct = True))
+        df['name_title'] = df['name_title'].apply(lambda x: ' '.join([lemmatizer.lemmatize(word) for word in x.split()]))
         df = df.dropna()
         return df
+
 
     def save_df(self, df, filename):
         df.to_csv(filename, index = None)
