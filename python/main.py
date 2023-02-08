@@ -12,7 +12,7 @@ if __name__ == '__main__':
 		from train import Train
 		start = time.time()
 		Train()
-		print('Finished Training in,' time.time() - start)
+		print('Finished Training in', time.time() - start)
 	elif (command == 'predict' or sys.argv[1] == 'p'):
 		from predict import Predict
 		predict = Predict()

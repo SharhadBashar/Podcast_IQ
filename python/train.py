@@ -15,8 +15,8 @@ class Train:
         self.data_path = data_path if data_path else '../data/'
         self.model_path = model_path if model_path else '../model/'
 
-        if not os.path.isdir('model'):
-            os.makedirs('model')
+        if not os.path.isdir(self.model_path):
+            os.makedirs(self.model_path)
 
         self.train(clean_filename = self.clean_filename, model_filename = self.model_filename)
         
