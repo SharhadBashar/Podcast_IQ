@@ -10,13 +10,14 @@ nltk.download("stopwords")
 from nltk.stem import WordNetLemmatizer
 
 class Predict:
-    def __init__(self, cat_map_path = None, model_path = None):
+    def __init__(self, cat_map_path = None, model_filename = None, data_path = None, model_path = None):
         self.cat_map_path = cat_map_path if cat_map_path else 'cat_mapping_en.pkl'
-        self.model_path = model_path if model_path else 'model.pkl'
+        self.model_filename = model_path if model_path else 'model.pkl'
         self.data_path = data_path if data_path else '../data/'
+        self.model_path = model_path if model_path else '../model/'
 
-        self.category_dict = pickle.load(open(cat_map_path, 'rb'))
-        self.model = pickle.load(open(model_path, 'rb'))
+        self.category_dict = pickle.load(open(os.path.join(data_path, cat_map_path), 'rb'))
+        self.model = pickle.load(open(os.path.join(model_path, model_filename), 'rb'))
         
     def clean_data(self, name, title):
         data = name + ' ' + title

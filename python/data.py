@@ -1,4 +1,5 @@
 import os
+import time
 import pickle
 import pandas as pd
 from cleantext import clean
@@ -31,12 +32,13 @@ class Data:
         self.get_en(os.path.join(self.data_path, self.in_filename), 
             save_file = True, 
             save_path = os.path.join(self.data_path, self.en_filename))
-
+        start = time.time()
         df = self.read_csv(os.path.join(self.data_path, self.en_filename), to_drop = to_drop)
         df = drop_cat(df)
         df = augment_cols(df, map_filename = self.map_filename)
         df = clean_data(df)
         self.save_df(df, os.path.join(data_path, self.clean_filename))
+        print('Finished data cleaning in,' time.time() - start)
 
     def read_csv(self, filename, to_drop = []):
         df = pd.read_csv(filename)

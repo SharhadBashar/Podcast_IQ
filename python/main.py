@@ -1,7 +1,5 @@
 import sys
-
-from train import Train
-from predict import Predict
+import time
 
 if __name__ == '__main__':
 	try:
@@ -11,9 +9,12 @@ if __name__ == '__main__':
 		exit()
 
 	if (command == 'train' or sys.argv[1] == 't'):
+		from train import Train
+		start = time.time()
 		Train()
-		print('Finished Training')
+		print('Finished Training in,' time.time() - start)
 	elif (command == 'predict' or sys.argv[1] == 'p'):
+		from predict import Predict
 		predict = Predict()
 		name = input('Please enter podcast name:')
 		title = input('Please enter podcast title:')

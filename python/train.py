@@ -4,17 +4,16 @@ import pandas as pd
 
 from sklearn.utils import shuffle
 from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
-from data import Data
-
 class Train:
-    def __init__(self, clean_filename = None, model_filename = None, data_path = None):
+    def __init__(self, clean_filename = None, model_filename = None, data_path = None, model_path = None):
 
         self.clean_filename = clean_filename if clean_filename else 'podcasts_en_cleaned.csv'
         self.model_filename = model_filename if model_filename else 'model.pkl'
         self.data_path = data_path if data_path else '../data/'
+        self.model_path = model_path if model_path else '../model/'
 
         if not os.path.isdir('model'):
             os.makedirs('model')
@@ -25,6 +24,7 @@ class Train:
         clean_data = input('Has data been cleaned? [y/n]:')
         if (clean_data.lower() == 'n'):
             print('Data cleaning started')
+            from data import Data
             Data()
         print('Starting Training')
         df = shuffle(pd.read_csv(os.path.join(self.data_path, clean_filename)).dropna())
@@ -37,8 +37,8 @@ class Train:
         clf = Pipeline([
              ('vect', CountVectorizer(stop_words = 'english')),
              ('tfidf', TfidfTransformer()),
-             ('clf', LogisticRegression(C = 100.0, random_state = 1, solver = 'lbfgs', multi_class = 'ovr'))
-        ])
+             ('clf', RandomForestClassifier()
+        )])
         model = clf.fit(X, y)
-        pickle.dump(model, open(os.path.join(self.data_path, model_filename), 'wb'))
-        print('Trained Model saved at {}'.format(model_filename))
+        pickle.dump(model, open(os.path.join(self.model_path, model_filename), 'wb'))
+        print('Trained Model saved at {}'.format(os.path.join(self.model_path, model_filename)))
