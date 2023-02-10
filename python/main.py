@@ -16,8 +16,8 @@ if __name__ == '__main__':
 	elif (command == 'predict' or sys.argv[1] == 'p'):
 		from predict import Predict
 		predict = Predict()
-		name = input('Please enter podcast name:')
-		title = input('Please enter podcast title:')
+		name = input('Please enter podcast name: ')
+		title = input('Please enter podcast episode title: ')
 		inp = predict.clean_data(name, title)
 		category = predict.predict(inp)
 		print('Podcast "{}" and Title "{}" is of "{}" category'.format(name, title, category))
