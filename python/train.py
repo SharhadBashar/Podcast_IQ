@@ -21,7 +21,7 @@ class Train:
         self.train(clean_filename = self.clean_filename, model_filename = self.model_filename)
         
     def get_data(self, clean_filename):
-        clean_data = input('Has data been cleaned? [y/n]:')
+        clean_data = input('Has data been cleaned? [y / n]: ')
         if (clean_data.lower() == 'n'):
             print('Data cleaning started')
             from data import Data
@@ -35,9 +35,9 @@ class Train:
     def train(self, clean_filename , model_filename):
         X, y = self.get_data(clean_filename = clean_filename)
         clf = Pipeline([
-             ('vect', CountVectorizer(stop_words = 'english')),
-             ('tfidf', TfidfTransformer()),
-             ('clf', RandomForestClassifier()
+            ('vect', CountVectorizer(stop_words = 'english')),
+            ('tfidf', TfidfTransformer()),
+            ('clf', RandomForestClassifier()
         )])
         model = clf.fit(X, y)
         pickle.dump(model, open(os.path.join(self.model_path, model_filename), 'wb'))

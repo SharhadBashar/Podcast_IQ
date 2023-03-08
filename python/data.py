@@ -32,13 +32,14 @@ class Data:
         self.get_en(os.path.join(self.data_path, self.in_filename), 
             save_file = True, 
             save_path = os.path.join(self.data_path, self.en_filename))
+        self.get_custom_stopwords()
         start = time.time()
-        df = self.read_csv(os.path.join(self.data_path, self.en_filename), to_drop = to_drop)
-        df = drop_cat(df)
-        df = augment_cols(df, map_filename = self.map_filename)
-        df = clean_data(df)
-        self.save_df(df, os.path.join(data_path, self.clean_filename))
-        print('Finished data cleaning in,' time.time() - start)
+        df = self.read_csv(os.path.join(self.data_path, self.en_filename), to_drop = self.to_drop)
+        df = self.drop_cat(df)
+        df = self.augment_cols(df, map_filename = self.map_filename)
+        df = self.clean_data(df)
+        self.save_df(df, os.path.join(self.data_path, self.clean_filename))
+        print('Finished data cleaning in', time.time() - start)
 
     def read_csv(self, filename, to_drop = []):
         df = pd.read_csv(filename)
@@ -46,7 +47,7 @@ class Data:
         return df
 
     def get_en(self, filename, save_file = False, save_path = None):
-        df = pd.DataFrame(filename)
+        df = pd.read_csv(filename)
         df[df['Language'] == 'en']
         if save_file:
             df.to_csv(save_path)
@@ -58,7 +59,7 @@ class Data:
         df = df[~df['stylename'].isin(cat_to_drop)]
         return df
 
-    def augment_cols(df, map_filename):
+    def augment_cols(self, df, map_filename):
         df['name_title'] = df['podcastname'].astype(str) + ' ' + df['Title'].astype(str)
         df['target'], map = pd.factorize(df['stylename'])
         map = dict(zip(range(len(map)), map))
@@ -66,7 +67,12 @@ class Data:
             pickle.dump(map, file, protocol = pickle.HIGHEST_PROTOCOL)
         return df 
 
-    def clean_data(df, translate = False):
+    def get_custom_stopwords(self):
+        with open('stop_words.pkl', 'rb') as file:
+            self.custom_stopwords = pickle.load(file)
+        file.close()
+    
+    def clean_data(self, df, translate = False):
         lemmatizer = WordNetLemmatizer()
         stop = stopwords.words('english')
         # df['name_title'] = df['name_title'].apply(lambda x: re.sub(date, ' ', x))
@@ -81,7 +87,8 @@ class Data:
                                                                 numbers = True,
                                                                 punct = True))
 
-        df['name'] = df['name'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
+        df['name_title'] = df['name_title'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
+        df['name_title'] = df['name_title'].apply(lambda x: ' '.join([word for word in x.split() if word not in (self.custom_stopwords)]))
         df['name_title'] = df['name_title'].apply(lambda x: ' '.join([lemmatizer.lemmatize(word) for word in x.split()]))
         df = df.dropna()
         return df
